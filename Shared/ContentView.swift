@@ -37,13 +37,59 @@ struct ContentView: View {
     //Update snake position 0.1 per sec
     let timer = Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()
     
+    //Bounds of the given screen
+    let minX = UIScreen.main.bounds.minX
+    let maxX = UIScreen.main.bounds.maxX
+    let minY = UIScreen.main.bounds.minY
+    let maxY = UIScreen.main.bounds.maxY
+    
+    //Func determines the position of our rectangles
+    func changeRectPos() -> CGPoint {
+        let rows = Int(maxX/snakeSize)
+        let cols = Int(maxY/snakeSize)
+        
+        let randomX = Int.random(in: 1..<rows) * Int(snakeSize)
+        let randomY = Int.random(in: 1..<cols) * Int(snakeSize)
+        
+        return CGPoint(x: randomX, y: randomY)
+    }
     
     
     var body: some View {
-        Text("Hello, world!")
-            .padding()
+        ZStack{
+            Color.pink.opacity(0.3)
+            ZStack{
+                ForEach(0..<snakePositionArray.count, id:\.self) { index in
+                    Rectangle()
+                        .frame(width: self.snakeSize, height: self.snakeSize)
+                        .position(self.snakePositionArray[index])
+                }
+                Rectangle()
+                    .fill(Color.red)
+                    .frame(width: snakeSize, height: snakeSize)
+                    .position(foodPosition)
+            }
+        }
+        .edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
+        .onAppear() {
+            self.foodPosition = self.changeRectPos()
+            self.snakePositionArray[0] = self.changeRectPos()
+        }
+        
+        //Draw game over
+        if self.gameOver {
+            Text("Game Over")
+        }
     }
 }
+
+
+
+
+
+
+
+
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
