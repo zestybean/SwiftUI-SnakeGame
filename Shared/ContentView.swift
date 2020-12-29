@@ -54,6 +54,34 @@ struct ContentView: View {
         return CGPoint(x: randomX, y: randomY)
     }
     
+    //Check outisde boundaries
+    func changeDirection () {
+        if self.snakePositionArray[0].x < minX || self.snakePositionArray[0].x > maxX && !gameOver {
+            gameOver.toggle()
+        }
+        else if self.snakePositionArray[0].y < minY || self.snakePositionArray[0].y > maxY && !gameOver {
+            gameOver.toggle()
+        }
+        
+        var prev = snakePositionArray[0]
+        
+        if dir == .down {
+            self.snakePositionArray[0].y += snakeSize
+        } else if dir == .up {
+            self.snakePositionArray[0].y -= snakeSize
+        } else if dir == .left {
+            self.snakePositionArray[0].x += snakeSize
+        } else {
+            self.snakePositionArray[0].x -= snakeSize
+        }
+        
+        for index in 1..<snakePositionArray.count {
+            let current = snakePositionArray[index]
+            snakePositionArray[index] = prev
+            prev = current
+        }
+    }
+    
     
     var body: some View {
         ZStack{
@@ -69,17 +97,53 @@ struct ContentView: View {
                     .frame(width: snakeSize, height: snakeSize)
                     .position(foodPosition)
             }
+            //Draw game over
+            if self.gameOver {
+                Text("Game Over")
+            }
         }
         .edgesIgnoringSafeArea(/*@START_MENU_TOKEN@*/.all/*@END_MENU_TOKEN@*/)
         .onAppear() {
             self.foodPosition = self.changeRectPos()
             self.snakePositionArray[0] = self.changeRectPos()
         }
-        
-        //Draw game over
-        if self.gameOver {
-            Text("Game Over")
+        .gesture(DragGesture()
+                    .onChanged { gesture in
+                        if self.isStarted {
+                            self.startPos = gesture.location
+                            self.isStarted.toggle()
+                        }
+                    }
+                    .onEnded { gesture in
+                        let xDist = abs(gesture.location.x - self.startPos.x)
+                        let yDist = abs(gesture.location.y - self.startPos.y)
+                        
+                        if self.startPos.y < gesture.location.y && yDist > xDist {
+                            self.dir = direction.down
+                        }
+                        else if self.startPos.y > gesture.location.y && yDist > xDist {
+                            self.dir = direction.up
+                        }
+                        else if self.startPos.x > gesture.location.x && yDist < xDist {
+                            self.dir = direction.right
+                        }
+                        else if self.startPos.x < gesture.location.x && yDist < xDist {
+                            self.dir = direction.left
+                        }
+                        self.isStarted.toggle()
+                    }
+        )
+        .onReceive(timer) { (_) in
+            if !self.gameOver {
+                self.changeDirection()
+                if self.snakePositionArray[0] == self.foodPosition {
+                    self.snakePositionArray.append(self.snakePositionArray[0])
+                    self.foodPosition = self.changeRectPos()
+                }
+            }
         }
+        
+        
     }
 }
 
